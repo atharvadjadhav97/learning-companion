@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# SQLite database
+*.db
+*.sqlite
+*.sqlite3
+
+# Node / React
+node_modules/
+dist/
+build/
+.npm/
+.vite/
+
+# Logs
+*.log
+logs/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Local generated app data
+data/
+vector_store/
+uploads/
+transcripts/
