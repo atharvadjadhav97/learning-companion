@@ -1,116 +1,124 @@
-import { useState } from "react";
-
-const initialTaskLists = [
-  {
-    id: 1,
-    name: "Groceries",
-    description: "Things to buy during grocery runs.",
-    tasks: [
-      { id: 1, title: "Buy Greek yogurt", isDone: false },
-      { id: 2, title: "Buy fruits", isDone: false },
-      { id: 3, title: "Buy sourdough bread", isDone: true },
-    ],
-  },
-  {
-    id: 2,
-    name: "Learning Companion Project",
-    description: "Tasks related to building this app.",
-    tasks: [
-      { id: 4, title: "Add sidebar workspace UI", isDone: true },
-      { id: 5, title: "Design task lists page", isDone: false },
-      { id: 6, title: "Add task backend with SQLite", isDone: false },
-    ],
-  },
-  {
-    id: 3,
-    name: "Personal",
-    description: "Personal admin and life tasks.",
-    tasks: [
-      { id: 7, title: "Organize documents", isDone: false },
-      { id: 8, title: "Plan weekly errands", isDone: false },
-    ],
-  },
-  {
-    id: 4,
-    name: "Tomorrow",
-    description: "Things I want to take up next day.",
-    tasks: [
-      { id: 9, title: "Review current project checkpoint", isDone: false },
-      { id: 10, title: "Watch one AI/RAG video during lunch", isDone: false },
-    ],
-  },
-];
+import { useEffect, useState } from "react";
+import {
+  createTask,
+  createTaskList,
+  getTaskLists,
+  getTasks,
+  toggleTask,
+} from "../api/tasks";
 
 function TasksPage() {
-  const [taskLists, setTaskLists] = useState(initialTaskLists);
-  const [selectedListId, setSelectedListId] = useState(initialTaskLists[0].id);
+  const [taskLists, setTaskLists] = useState([]);
+  const [selectedList, setSelectedList] = useState(null);
+  const [tasks, setTasks] = useState([]);
+
+  const [newListName, setNewListName] = useState("");
+  const [newListDescription, setNewListDescription] = useState("");
   const [newTaskTitle, setNewTaskTitle] = useState("");
 
-  const selectedList = taskLists.find((list) => list.id === selectedListId);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  function handleAddTask(event) {
+  useEffect(() => {
+    loadTaskLists();
+  }, []);
+
+  useEffect(() => {
+    if (selectedList) {
+      loadTasks(selectedList.id);
+    } else {
+      setTasks([]);
+    }
+  }, [selectedList]);
+
+  async function loadTaskLists() {
+    try {
+      const data = await getTaskLists();
+      setTaskLists(data);
+
+      if (data.length > 0 && !selectedList) {
+        setSelectedList(data[0]);
+      }
+    } catch (error) {
+      setErrorMessage(error.message || "Could not load task lists");
+    }
+  }
+
+  async function loadTasks(taskListId) {
+    try {
+      const data = await getTasks(taskListId);
+      setTasks(data);
+    } catch (error) {
+      setErrorMessage(error.message || "Could not load tasks");
+    }
+  }
+
+  async function handleCreateTaskList(event) {
     event.preventDefault();
+    setErrorMessage("");
 
-    if (!newTaskTitle.trim() || !selectedList) {
+    if (!newListName.trim()) {
+      setErrorMessage("Task list name is required");
       return;
     }
 
-    const newTask = {
-      id: Date.now(),
-      title: newTaskTitle.trim(),
-      isDone: false,
-    };
+    try {
+      const createdList = await createTaskList({
+        name: newListName.trim(),
+        description: newListDescription.trim() || null,
+      });
 
-    setTaskLists((currentLists) =>
-      currentLists.map((list) => {
-        if (list.id !== selectedList.id) {
-          return list;
-        }
+      setNewListName("");
+      setNewListDescription("");
 
-        return {
-          ...list,
-          tasks: [newTask, ...list.tasks],
-        };
-      })
-    );
-
-    setNewTaskTitle("");
+      await loadTaskLists();
+      setSelectedList(createdList);
+    } catch (error) {
+      setErrorMessage(error.message || "Could not create task list");
+    }
   }
 
-  function handleToggleTask(taskId) {
-    setTaskLists((currentLists) =>
-      currentLists.map((list) => {
-        if (list.id !== selectedListId) {
-          return list;
-        }
+  async function handleAddTask(event) {
+    event.preventDefault();
+    setErrorMessage("");
 
-        return {
-          ...list,
-          tasks: list.tasks.map((task) => {
-            if (task.id !== taskId) {
-              return task;
-            }
+    if (!selectedList) {
+      setErrorMessage("Select a task list first");
+      return;
+    }
 
-            return {
-              ...task,
-              isDone: !task.isDone,
-            };
-          }),
-        };
-      })
-    );
+    if (!newTaskTitle.trim()) {
+      setErrorMessage("Task title is required");
+      return;
+    }
+
+    try {
+      await createTask(selectedList.id, {
+        title: newTaskTitle.trim(),
+      });
+
+      setNewTaskTitle("");
+      await loadTasks(selectedList.id);
+    } catch (error) {
+      setErrorMessage(error.message || "Could not create task");
+    }
   }
 
-  const totalTasks = taskLists.reduce(
-    (total, list) => total + list.tasks.length,
-    0
-  );
+  async function handleToggleTask(taskId) {
+    setErrorMessage("");
 
-  const completedTasks = taskLists.reduce(
-    (total, list) =>
-      total + list.tasks.filter((task) => task.isDone).length,
-    0
-  );
+    try {
+      await toggleTask(taskId);
+
+      if (selectedList) {
+        await loadTasks(selectedList.id);
+      }
+    } catch (error) {
+      setErrorMessage(error.message || "Could not update task");
+    }
+  }
+
+  const completedTasks = tasks.filter((task) => task.is_done === 1).length;
+  const openTasks = tasks.length - completedTasks;
 
   return (
     <div className="page">
@@ -124,54 +132,89 @@ function TasksPage() {
         </div>
       </header>
 
+      {errorMessage && <div className="error-banner">{errorMessage}</div>}
+
       <div className="task-stats-grid">
         <section className="stat-card">
-          <span>Total tasks</span>
-          <strong>{totalTasks}</strong>
+          <span>Lists</span>
+          <strong>{taskLists.length}</strong>
         </section>
 
         <section className="stat-card">
-          <span>Completed</span>
+          <span>Selected open</span>
+          <strong>{openTasks}</strong>
+        </section>
+
+        <section className="stat-card">
+          <span>Selected completed</span>
           <strong>{completedTasks}</strong>
-        </section>
-
-        <section className="stat-card">
-          <span>Open</span>
-          <strong>{totalTasks - completedTasks}</strong>
         </section>
       </div>
 
       <div className="tasks-layout">
         <section className="panel task-list-panel">
           <div className="panel-header">
-            <h3>Lists</h3>
-            <p>Choose the area you want to focus on.</p>
+            <h3>Create List</h3>
+            <p>Add focused areas like Groceries, Personal, or Project tasks.</p>
           </div>
 
-          <div className="task-list-menu">
-            {taskLists.map((list) => {
-              const openCount = list.tasks.filter((task) => !task.isDone).length;
+          <form onSubmit={handleCreateTaskList} className="form-stack">
+            <label>
+              List Name
+              <input
+                value={newListName}
+                onChange={(event) => setNewListName(event.target.value)}
+                placeholder="Example: Groceries"
+              />
+            </label>
 
-              return (
-                <button
-                  key={list.id}
-                  type="button"
-                  onClick={() => setSelectedListId(list.id)}
-                  className={
-                    selectedListId === list.id
-                      ? "task-list-card selected"
-                      : "task-list-card"
-                  }
-                >
-                  <div>
-                    <strong>{list.name}</strong>
-                    <span>{list.description}</span>
-                  </div>
+            <label>
+              Description
+              <textarea
+                value={newListDescription}
+                onChange={(event) =>
+                  setNewListDescription(event.target.value)
+                }
+                placeholder="Optional short description"
+              />
+            </label>
 
-                  <small>{openCount} open</small>
-                </button>
-              );
-            })}
+            <button type="submit" className="primary-button">
+              Create List
+            </button>
+          </form>
+
+          <div className="topic-list-section">
+            <h3>Lists</h3>
+
+            {taskLists.length === 0 ? (
+              <p className="muted-text">
+                No task lists yet. Create your first list.
+              </p>
+            ) : (
+              <div className="task-list-menu">
+                {taskLists.map((list) => (
+                  <button
+                    key={list.id}
+                    type="button"
+                    onClick={() => {
+                      setErrorMessage("");
+                      setSelectedList(list);
+                    }}
+                    className={
+                      selectedList?.id === list.id
+                        ? "task-list-card selected"
+                        : "task-list-card"
+                    }
+                  >
+                    <div>
+                      <strong>{list.name}</strong>
+                      {list.description && <span>{list.description}</span>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -179,14 +222,14 @@ function TasksPage() {
           {!selectedList ? (
             <div className="empty-state">
               <h3>Select a list</h3>
-              <p>Choose a list to view and add tasks.</p>
+              <p>Choose or create a list to view and add tasks.</p>
             </div>
           ) : (
             <>
               <div className="panel-header">
                 <p className="eyebrow">Selected List</p>
                 <h3>{selectedList.name}</h3>
-                <p>{selectedList.description}</p>
+                {selectedList.description && <p>{selectedList.description}</p>}
               </div>
 
               <form onSubmit={handleAddTask} className="task-add-row">
@@ -202,19 +245,21 @@ function TasksPage() {
               </form>
 
               <div className="task-items">
-                {selectedList.tasks.length === 0 ? (
+                {tasks.length === 0 ? (
                   <p className="muted-text">No tasks in this list yet.</p>
                 ) : (
-                  selectedList.tasks.map((task) => (
+                  tasks.map((task) => (
                     <label
                       key={task.id}
                       className={
-                        task.isDone ? "task-item completed" : "task-item"
+                        task.is_done === 1
+                          ? "task-item completed"
+                          : "task-item"
                       }
                     >
                       <input
                         type="checkbox"
-                        checked={task.isDone}
+                        checked={task.is_done === 1}
                         onChange={() => handleToggleTask(task.id)}
                       />
 
@@ -227,14 +272,6 @@ function TasksPage() {
           )}
         </section>
       </div>
-
-      <section className="panel note-panel">
-        <h3>Checkpoint note</h3>
-        <p className="muted-text">
-          These tasks are currently frontend-only mock data. They reset when the page refreshes.
-          In the next task checkpoint, we will persist task lists and tasks with SQLite.
-        </p>
-      </section>
     </div>
   );
 }
