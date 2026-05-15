@@ -1,11 +1,8 @@
-from app.schemas.learning_input import LearningInput
-
-
 class MockAIProvider:
     def generate_topic_summary(
         self,
         topic_title: str,
-        learning_inputs: list[LearningInput],
+        learning_inputs: list,
     ) -> str:
         if not learning_inputs:
             return (
