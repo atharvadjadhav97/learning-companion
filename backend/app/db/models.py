@@ -39,3 +39,33 @@ class LearningInputModel(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     topic = relationship("TopicModel", back_populates="learning_inputs")
+    
+    
+class TaskListModel(Base):
+    __tablename__ = "task_lists"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    tasks = relationship(
+        "TaskModel",
+        back_populates="task_list",
+        cascade="all, delete-orphan",
+    )
+
+
+class TaskModel(Base):
+    __tablename__ = "tasks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    task_list_id = Column(Integer, ForeignKey("task_lists.id"), nullable=False)
+
+    title = Column(String(500), nullable=False)
+    is_done = Column(Integer, nullable=False, default=0)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    task_list = relationship("TaskListModel", back_populates="tasks")
