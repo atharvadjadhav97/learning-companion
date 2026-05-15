@@ -4,7 +4,6 @@ import {
   createLearningInput,
   getLearningInputs,
 } from "./api/learningInputs";
-
 import {
   generateTopicSummary,
   getTopicSummary,
@@ -22,10 +21,10 @@ function App() {
   const [inputType, setInputType] = useState("quick_note");
   const [inputContent, setInputContent] = useState("");
 
-  const [errorMessage, setErrorMessage] = useState("");
-
   const [topicSummary, setTopicSummary] = useState("");
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     fetch("http://localhost:8000/health")
@@ -68,6 +67,15 @@ function App() {
     }
   }
 
+  async function loadTopicSummary(topicId) {
+    try {
+      const data = await getTopicSummary(topicId);
+      setTopicSummary(data.summary);
+    } catch {
+      setErrorMessage("Could not load topic summary");
+    }
+  }
+
   async function handleCreateTopic(event) {
     event.preventDefault();
     setErrorMessage("");
@@ -85,6 +93,7 @@ function App() {
 
       setTopicTitle("");
       setTopicDescription("");
+
       await loadTopics();
       setSelectedTopic(newTopic);
     } catch {
@@ -118,19 +127,17 @@ function App() {
       setErrorMessage("Could not create learning input");
     }
   }
-  
-  async function loadTopicSummary(topicId) {
-  try {
-    const data = await getTopicSummary(topicId);
-    setTopicSummary(data.summary);
-  } catch {
-    setErrorMessage("Could not load topic summary");
-  }
-}
 
-  async function handleGenerateTopicSummary() {
+  async function handleGenerateTopicSummary(forceRegenerate = false) {
     if (!selectedTopic) {
       setErrorMessage("Select a topic first");
+      return;
+    }
+
+    if (topicSummary && !forceRegenerate) {
+      setErrorMessage(
+        "Summary already exists. Use Regenerate if you really want to call AI again."
+      );
       return;
     }
 
@@ -138,7 +145,10 @@ function App() {
     setIsGeneratingSummary(true);
 
     try {
-      const data = await generateTopicSummary(selectedTopic.id);
+      const data = await generateTopicSummary(
+        selectedTopic.id,
+        forceRegenerate
+      );
       setTopicSummary(data.summary);
     } catch {
       setErrorMessage("Could not generate topic summary");
@@ -177,9 +187,15 @@ function App() {
               <br />
               <textarea
                 value={topicDescription}
-                onChange={(event) => setTopicDescription(event.target.value)}
+                onChange={(event) =>
+                  setTopicDescription(event.target.value)
+                }
                 placeholder="Optional short description"
-                style={{ padding: "0.5rem", width: "300px", height: "80px" }}
+                style={{
+                  padding: "0.5rem",
+                  width: "300px",
+                  height: "80px",
+                }}
               />
             </label>
           </div>
@@ -198,7 +214,11 @@ function App() {
             {topics.map((topic) => (
               <li key={topic.id} style={{ marginBottom: "1rem" }}>
                 <button
-                  onClick={() => setSelectedTopic(topic)}
+                  type="button"
+                  onClick={() => {
+                    setErrorMessage("");
+                    setSelectedTopic(topic);
+                  }}
                   style={{
                     fontWeight:
                       selectedTopic?.id === topic.id ? "bold" : "normal",
@@ -206,6 +226,7 @@ function App() {
                 >
                   {topic.title}
                 </button>
+
                 {topic.description && <p>{topic.description}</p>}
               </li>
             ))}
@@ -246,7 +267,9 @@ function App() {
                   <br />
                   <textarea
                     value={inputContent}
-                    onChange={(event) => setInputContent(event.target.value)}
+                    onChange={(event) =>
+                      setInputContent(event.target.value)
+                    }
                     placeholder="Paste a thought, text, or YouTube URL"
                     style={{
                       padding: "0.5rem",
@@ -259,36 +282,57 @@ function App() {
 
               <button type="submit">Add Learning Input</button>
             </form>
-            
-            <div
-                style={{
-                  marginTop: "2rem",
-                  marginBottom: "2rem",
-                  border: "1px solid #ddd",
-                  padding: "1rem",
-                }}
-              >
-                <h3>Topic Summary</h3>
 
+            <div
+              style={{
+                marginTop: "2rem",
+                marginBottom: "2rem",
+                border: "1px solid #ddd",
+                padding: "1rem",
+              }}
+            >
+              <h3>Topic Summary</h3>
+
+              <button
+                type="button"
+                onClick={() => handleGenerateTopicSummary(false)}
+                disabled={isGeneratingSummary || Boolean(topicSummary)}
+              >
+                {isGeneratingSummary
+                  ? "Generating..."
+                  : "Generate Topic Summary"}
+              </button>
+
+              {topicSummary && (
                 <button
                   type="button"
-                  onClick={handleGenerateTopicSummary}
-                  disabled={isGeneratingSummary}
-                >
-                  {isGeneratingSummary ? "Generating..." : "Generate Topic Summary"}
-                </button>
+                  onClick={() => {
+                    const shouldRegenerate = window.confirm(
+                      "This will call the AI provider again and may cost money. Continue?"
+                    );
 
-                {topicSummary ? (
-                  <p style={{ whiteSpace: "pre-wrap", marginTop: "1rem" }}>
-                    {topicSummary}
-                  </p>
-                ) : (
-                  <p style={{ marginTop: "1rem" }}>
-                    No summary yet. Add learning inputs and generate one.
-                  </p>
-                )}
+                    if (shouldRegenerate) {
+                      handleGenerateTopicSummary(true);
+                    }
+                  }}
+                  disabled={isGeneratingSummary}
+                  style={{ marginLeft: "0.5rem" }}
+                >
+                  Regenerate Summary
+                </button>
+              )}
+
+              {topicSummary ? (
+                <p style={{ whiteSpace: "pre-wrap", marginTop: "1rem" }}>
+                  {topicSummary}
+                </p>
+              ) : (
+                <p style={{ marginTop: "1rem" }}>
+                  No summary yet. Add learning inputs and generate one.
+                </p>
+              )}
             </div>
-            
+
             <h3 style={{ marginTop: "2rem" }}>Saved Inputs</h3>
 
             {learningInputs.length === 0 ? (

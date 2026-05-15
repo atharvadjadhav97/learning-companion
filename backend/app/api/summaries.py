@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
@@ -10,11 +10,21 @@ router = APIRouter(prefix="/topics/{topic_id}/summary", tags=["summaries"])
 
 
 @router.post("", response_model=TopicSummary)
-def generate_topic_summary(topic_id: int, db: Session = Depends(get_db)):
+def generate_topic_summary(
+    topic_id: int,
+    force_regenerate: bool = Query(False),
+    db: Session = Depends(get_db),
+):
     topic = db.query(TopicModel).filter(TopicModel.id == topic_id).first()
 
     if topic is None:
         raise HTTPException(status_code=404, detail="Topic not found")
+
+    if topic.summary and not force_regenerate:
+        return TopicSummary(
+            topic_id=topic_id,
+            summary=topic.summary,
+        )
 
     topic_inputs = (
         db.query(LearningInputModel)
@@ -22,6 +32,12 @@ def generate_topic_summary(topic_id: int, db: Session = Depends(get_db)):
         .order_by(LearningInputModel.created_at.asc())
         .all()
     )
+
+    if not topic_inputs:
+        raise HTTPException(
+            status_code=400,
+            detail="Add at least one learning input before generating a summary.",
+        )
 
     ai_provider = get_ai_provider()
     summary = ai_provider.generate_topic_summary(
