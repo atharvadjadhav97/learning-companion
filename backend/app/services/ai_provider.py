@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from openai import OpenAI
 
 from app.core.config import settings
 
@@ -42,11 +43,107 @@ Later, this same provider layer can call OpenAI, Claude, or Ollama without chang
 
 
 class OpenAIProvider:
-    def generate_topic_summary(self, topic_title: str, learning_inputs: list) -> str:
-        raise HTTPException(
-            status_code=501,
-            detail="OpenAI provider is configured but not implemented yet.",
-        )
+    def __init__(self):
+        if not settings.OPENAI_API_KEY:
+            raise HTTPException(
+                status_code=400,
+                detail="OPENAI_API_KEY is missing in backend/.env",
+            )
+
+        self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
+    def generate_topic_summary(
+        self,
+        topic_title: str,
+        learning_inputs: list,
+    ) -> str:
+        if not learning_inputs:
+            return (
+                f"You created the topic '{topic_title}', "
+                "but there are no learning inputs yet. Add notes, pasted text, "
+                "or YouTube links first."
+            )
+
+        inputs_text = self._build_inputs_text(learning_inputs)
+
+        prompt = f"""
+You are helping Atharva build a lightweight learning companion app.
+
+He does not want heavy academic notes.
+He wants a simple, ADHD-friendly learning summary that makes post-learning note-taking easier.
+
+Topic:
+{topic_title}
+
+Saved learning inputs:
+{inputs_text}
+
+Create a clean summary with this structure:
+
+1. What I learned
+Write this from the learner's perspective using simple language.
+
+2. Key ideas to remember
+Use short bullets.
+
+3. Simple example
+Give one practical example if possible.
+
+4. Still unclear / things to revisit
+Mention anything that seems incomplete, confusing, or worth learning next.
+
+Keep the tone practical, simple, and not too long.
+Do not invent details that are not supported by the saved inputs.
+""".strip()
+
+        try:
+            response = self.client.responses.create(
+                model=settings.OPENAI_MODEL,
+                instructions=(
+                    "You are a practical learning assistant. "
+                    "Your job is to turn rough learning inputs into clear, concise notes."
+                ),
+                input=prompt,
+                max_output_tokens=settings.OPENAI_MAX_OUTPUT_TOKENS,
+            )
+
+            return response.output_text.strip()
+
+        except Exception as exc:
+            print("OPENAI ERROR:", repr(exc))
+            raise HTTPException(
+                status_code=500,
+                detail=f"OpenAI summary generation failed: {str(exc)}",
+    )
+
+    def _build_inputs_text(self, learning_inputs: list) -> str:
+        max_chars_per_input = 1200
+        max_total_chars = 6000
+
+        sections = []
+        total_chars = 0
+
+        for index, learning_input in enumerate(learning_inputs, start=1):
+            content = learning_input.content.strip()
+            content = content[:max_chars_per_input]
+
+            section = f"""
+Input {index}
+Type: {learning_input.input_type}
+Content:
+{content}
+""".strip()
+
+            if total_chars + len(section) > max_total_chars:
+                sections.append(
+                    "\n[Some additional inputs were skipped to keep AI cost low.]"
+                )
+                break
+
+            sections.append(section)
+            total_chars += len(section)
+
+        return "\n\n".join(sections)
 
 
 class ClaudeProvider:
