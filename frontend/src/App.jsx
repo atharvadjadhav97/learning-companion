@@ -5,6 +5,11 @@ import {
   getLearningInputs,
 } from "./api/learningInputs";
 
+import {
+  generateTopicSummary,
+  getTopicSummary,
+} from "./api/summaries";
+
 function App() {
   const [apiMessage, setApiMessage] = useState("Checking backend...");
   const [topics, setTopics] = useState([]);
@@ -18,6 +23,9 @@ function App() {
   const [inputContent, setInputContent] = useState("");
 
   const [errorMessage, setErrorMessage] = useState("");
+
+  const [topicSummary, setTopicSummary] = useState("");
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:8000/health")
@@ -35,8 +43,10 @@ function App() {
   useEffect(() => {
     if (selectedTopic) {
       loadLearningInputs(selectedTopic.id);
+      loadTopicSummary(selectedTopic.id);
     } else {
       setLearningInputs([]);
+      setTopicSummary("");
     }
   }, [selectedTopic]);
 
@@ -106,6 +116,34 @@ function App() {
       await loadLearningInputs(selectedTopic.id);
     } catch {
       setErrorMessage("Could not create learning input");
+    }
+  }
+  
+  async function loadTopicSummary(topicId) {
+  try {
+    const data = await getTopicSummary(topicId);
+    setTopicSummary(data.summary);
+  } catch {
+    setErrorMessage("Could not load topic summary");
+  }
+}
+
+  async function handleGenerateTopicSummary() {
+    if (!selectedTopic) {
+      setErrorMessage("Select a topic first");
+      return;
+    }
+
+    setErrorMessage("");
+    setIsGeneratingSummary(true);
+
+    try {
+      const data = await generateTopicSummary(selectedTopic.id);
+      setTopicSummary(data.summary);
+    } catch {
+      setErrorMessage("Could not generate topic summary");
+    } finally {
+      setIsGeneratingSummary(false);
     }
   }
 
@@ -221,7 +259,36 @@ function App() {
 
               <button type="submit">Add Learning Input</button>
             </form>
+            
+            <div
+                style={{
+                  marginTop: "2rem",
+                  marginBottom: "2rem",
+                  border: "1px solid #ddd",
+                  padding: "1rem",
+                }}
+              >
+                <h3>Topic Summary</h3>
 
+                <button
+                  type="button"
+                  onClick={handleGenerateTopicSummary}
+                  disabled={isGeneratingSummary}
+                >
+                  {isGeneratingSummary ? "Generating..." : "Generate Topic Summary"}
+                </button>
+
+                {topicSummary ? (
+                  <p style={{ whiteSpace: "pre-wrap", marginTop: "1rem" }}>
+                    {topicSummary}
+                  </p>
+                ) : (
+                  <p style={{ marginTop: "1rem" }}>
+                    No summary yet. Add learning inputs and generate one.
+                  </p>
+                )}
+            </div>
+            
             <h3 style={{ marginTop: "2rem" }}>Saved Inputs</h3>
 
             {learningInputs.length === 0 ? (
