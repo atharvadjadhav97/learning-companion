@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import {
   createTask,
   createTaskList,
+  deleteTask,
   getTaskLists,
   getTasks,
   toggleTask,
+  updateTask,
 } from "../api/tasks";
 
 function TasksPage() {
@@ -15,6 +17,9 @@ function TasksPage() {
   const [newListName, setNewListName] = useState("");
   const [newListDescription, setNewListDescription] = useState("");
   const [newTaskTitle, setNewTaskTitle] = useState("");
+
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [editingTaskTitle, setEditingTaskTitle] = useState("");
 
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -117,6 +122,63 @@ function TasksPage() {
     }
   }
 
+  function startEditingTask(task) {
+    setEditingTaskId(task.id);
+    setEditingTaskTitle(task.title);
+    setErrorMessage("");
+  }
+
+  function cancelEditingTask() {
+    setEditingTaskId(null);
+    setEditingTaskTitle("");
+  }
+
+  async function handleSaveEditedTask(taskId) {
+    setErrorMessage("");
+
+    if (!editingTaskTitle.trim()) {
+      setErrorMessage("Task title is required");
+      return;
+    }
+
+    try {
+      await updateTask(taskId, {
+        title: editingTaskTitle.trim(),
+      });
+
+      setEditingTaskId(null);
+      setEditingTaskTitle("");
+
+      if (selectedList) {
+        await loadTasks(selectedList.id);
+      }
+    } catch (error) {
+      setErrorMessage(error.message || "Could not update task");
+    }
+  }
+
+  async function handleDeleteTask(taskId) {
+    setErrorMessage("");
+
+    const shouldDelete = window.confirm(
+      "Are you sure you want to delete this task?"
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      await deleteTask(taskId);
+
+      if (selectedList) {
+        await loadTasks(selectedList.id);
+      }
+    } catch (error) {
+      setErrorMessage(error.message || "Could not delete task");
+    }
+  }
+
   const completedTasks = tasks.filter((task) => task.is_done === 1).length;
   const openTasks = tasks.length - completedTasks;
 
@@ -200,6 +262,7 @@ function TasksPage() {
                     onClick={() => {
                       setErrorMessage("");
                       setSelectedList(list);
+                      cancelEditingTask();
                     }}
                     className={
                       selectedList?.id === list.id
@@ -249,22 +312,73 @@ function TasksPage() {
                   <p className="muted-text">No tasks in this list yet.</p>
                 ) : (
                   tasks.map((task) => (
-                    <label
+                    <div
                       key={task.id}
                       className={
                         task.is_done === 1
-                          ? "task-item completed"
-                          : "task-item"
+                          ? "task-item task-item-row completed"
+                          : "task-item task-item-row"
                       }
                     >
-                      <input
-                        type="checkbox"
-                        checked={task.is_done === 1}
-                        onChange={() => handleToggleTask(task.id)}
-                      />
+                      <label className="task-check-label">
+                        <input
+                          type="checkbox"
+                          checked={task.is_done === 1}
+                          onChange={() => handleToggleTask(task.id)}
+                        />
+                      </label>
 
-                      <span>{task.title}</span>
-                    </label>
+                      {editingTaskId === task.id ? (
+                        <div className="task-edit-area">
+                          <input
+                            value={editingTaskTitle}
+                            onChange={(event) =>
+                              setEditingTaskTitle(event.target.value)
+                            }
+                          />
+
+                          <div className="task-actions">
+                            <button
+                              type="button"
+                              className="primary-button small-button"
+                              onClick={() => handleSaveEditedTask(task.id)}
+                            >
+                              Save
+                            </button>
+
+                            <button
+                              type="button"
+                              className="secondary-button small-button"
+                              onClick={cancelEditingTask}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="task-title">{task.title}</span>
+
+                          <div className="task-actions">
+                            <button
+                              type="button"
+                              className="secondary-button small-button"
+                              onClick={() => startEditingTask(task)}
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              className="danger-button small-button"
+                              onClick={() => handleDeleteTask(task.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   ))
                 )}
               </div>

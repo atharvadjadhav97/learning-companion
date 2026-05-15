@@ -76,3 +76,31 @@ export async function toggleTask(taskId) {
 
   return response.json();
 }
+
+export async function updateTask(taskId, taskData) {
+  const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(taskData),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response, "Failed to update task"));
+  }
+
+  return response.json();
+}
+
+export async function deleteTask(taskId) {
+  const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response, "Failed to delete task"));
+  }
+
+  return response.json();
+}
