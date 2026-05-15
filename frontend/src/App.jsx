@@ -1,11 +1,22 @@
 import { useEffect, useState } from "react";
 import { createTopic, getTopics } from "./api/topics";
+import {
+  createLearningInput,
+  getLearningInputs,
+} from "./api/learningInputs";
 
 function App() {
   const [apiMessage, setApiMessage] = useState("Checking backend...");
   const [topics, setTopics] = useState([]);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [selectedTopic, setSelectedTopic] = useState(null);
+
+  const [topicTitle, setTopicTitle] = useState("");
+  const [topicDescription, setTopicDescription] = useState("");
+
+  const [learningInputs, setLearningInputs] = useState([]);
+  const [inputType, setInputType] = useState("quick_note");
+  const [inputContent, setInputContent] = useState("");
+
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -21,6 +32,14 @@ function App() {
     loadTopics();
   }, []);
 
+  useEffect(() => {
+    if (selectedTopic) {
+      loadLearningInputs(selectedTopic.id);
+    } else {
+      setLearningInputs([]);
+    }
+  }, [selectedTopic]);
+
   async function loadTopics() {
     try {
       const data = await getTopics();
@@ -30,26 +49,63 @@ function App() {
     }
   }
 
+  async function loadLearningInputs(topicId) {
+    try {
+      const data = await getLearningInputs(topicId);
+      setLearningInputs(data);
+    } catch {
+      setErrorMessage("Could not load learning inputs");
+    }
+  }
+
   async function handleCreateTopic(event) {
     event.preventDefault();
     setErrorMessage("");
 
-    if (!title.trim()) {
+    if (!topicTitle.trim()) {
       setErrorMessage("Topic title is required");
       return;
     }
 
     try {
-      await createTopic({
-        title: title.trim(),
-        description: description.trim() || null,
+      const newTopic = await createTopic({
+        title: topicTitle.trim(),
+        description: topicDescription.trim() || null,
       });
 
-      setTitle("");
-      setDescription("");
+      setTopicTitle("");
+      setTopicDescription("");
       await loadTopics();
+      setSelectedTopic(newTopic);
     } catch {
       setErrorMessage("Could not create topic");
+    }
+  }
+
+  async function handleCreateLearningInput(event) {
+    event.preventDefault();
+    setErrorMessage("");
+
+    if (!selectedTopic) {
+      setErrorMessage("Select a topic first");
+      return;
+    }
+
+    if (!inputContent.trim()) {
+      setErrorMessage("Learning input content is required");
+      return;
+    }
+
+    try {
+      await createLearningInput(selectedTopic.id, {
+        input_type: inputType,
+        content: inputContent.trim(),
+      });
+
+      setInputContent("");
+      await loadLearningInputs(selectedTopic.id);
+    } catch {
+      setErrorMessage("Could not create learning input");
     }
   }
 
@@ -57,6 +113,8 @@ function App() {
     <main style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
       <h1>Learning Companion</h1>
       <p>{apiMessage}</p>
+
+      {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
 
       <section style={{ marginTop: "2rem" }}>
         <h2>Create Topic</h2>
@@ -67,8 +125,8 @@ function App() {
               Title
               <br />
               <input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
+                value={topicTitle}
+                onChange={(event) => setTopicTitle(event.target.value)}
                 placeholder="Example: RAG"
                 style={{ padding: "0.5rem", width: "300px" }}
               />
@@ -80,8 +138,8 @@ function App() {
               Description
               <br />
               <textarea
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
+                value={topicDescription}
+                onChange={(event) => setTopicDescription(event.target.value)}
                 placeholder="Optional short description"
                 style={{ padding: "0.5rem", width: "300px", height: "80px" }}
               />
@@ -90,10 +148,6 @@ function App() {
 
           <button type="submit">Create Topic</button>
         </form>
-
-        {errorMessage && (
-          <p style={{ color: "red" }}>{errorMessage}</p>
-        )}
       </section>
 
       <section style={{ marginTop: "2rem" }}>
@@ -105,11 +159,93 @@ function App() {
           <ul>
             {topics.map((topic) => (
               <li key={topic.id} style={{ marginBottom: "1rem" }}>
-                <strong>{topic.title}</strong>
+                <button
+                  onClick={() => setSelectedTopic(topic)}
+                  style={{
+                    fontWeight:
+                      selectedTopic?.id === topic.id ? "bold" : "normal",
+                  }}
+                >
+                  {topic.title}
+                </button>
                 {topic.description && <p>{topic.description}</p>}
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      <section style={{ marginTop: "2rem" }}>
+        <h2>
+          Learning Inputs{" "}
+          {selectedTopic ? `for ${selectedTopic.title}` : ""}
+        </h2>
+
+        {!selectedTopic ? (
+          <p>Select a topic to add learning inputs.</p>
+        ) : (
+          <>
+            <form onSubmit={handleCreateLearningInput}>
+              <div style={{ marginBottom: "1rem" }}>
+                <label>
+                  Input Type
+                  <br />
+                  <select
+                    value={inputType}
+                    onChange={(event) => setInputType(event.target.value)}
+                    style={{ padding: "0.5rem", width: "320px" }}
+                  >
+                    <option value="quick_note">Quick Note</option>
+                    <option value="pasted_text">Pasted Text</option>
+                    <option value="youtube_url">YouTube URL</option>
+                  </select>
+                </label>
+              </div>
+
+              <div style={{ marginBottom: "1rem" }}>
+                <label>
+                  Content
+                  <br />
+                  <textarea
+                    value={inputContent}
+                    onChange={(event) => setInputContent(event.target.value)}
+                    placeholder="Paste a thought, text, or YouTube URL"
+                    style={{
+                      padding: "0.5rem",
+                      width: "400px",
+                      height: "120px",
+                    }}
+                  />
+                </label>
+              </div>
+
+              <button type="submit">Add Learning Input</button>
+            </form>
+
+            <h3 style={{ marginTop: "2rem" }}>Saved Inputs</h3>
+
+            {learningInputs.length === 0 ? (
+              <p>No learning inputs yet for this topic.</p>
+            ) : (
+              <ul>
+                {learningInputs.map((learningInput) => (
+                  <li
+                    key={learningInput.id}
+                    style={{
+                      marginBottom: "1rem",
+                      border: "1px solid #ddd",
+                      padding: "1rem",
+                    }}
+                  >
+                    <strong>{learningInput.input_type}</strong>
+                    <p style={{ whiteSpace: "pre-wrap" }}>
+                      {learningInput.content}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
       </section>
     </main>
