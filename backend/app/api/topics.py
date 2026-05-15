@@ -1,28 +1,32 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.db.database import get_db
+from app.db.models import TopicModel
 from app.schemas.topic import Topic, TopicCreate
 
 router = APIRouter(prefix="/topics", tags=["topics"])
 
-topics: list[Topic] = []
-next_topic_id = 1
-
 
 @router.get("", response_model=list[Topic])
-def get_topics():
-    return topics
+def get_topics(db: Session = Depends(get_db)):
+    return db.query(TopicModel).order_by(TopicModel.created_at.desc()).all()
 
 
 @router.post("", response_model=Topic)
-def create_topic(topic_data: TopicCreate):
-    global next_topic_id
+def create_topic(topic_data: TopicCreate, db: Session = Depends(get_db)):
+    if not topic_data.title.strip():
+        raise HTTPException(status_code=400, detail="Topic title is required")
 
-    topic = Topic(
-        id=next_topic_id,
-        title=topic_data.title,
-        description=topic_data.description,
+    topic = TopicModel(
+        title=topic_data.title.strip(),
+        description=topic_data.description.strip()
+        if topic_data.description
+        else None,
     )
 
-    topics.append(topic)
-    next_topic_id += 1
+    db.add(topic)
+    db.commit()
+    db.refresh(topic)
 
     return topic
