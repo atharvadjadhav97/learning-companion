@@ -20,6 +20,8 @@ class TaskList(BaseModel):
 class TaskCreate(BaseModel):
     title: str
 
+class TaskUpdate(BaseModel):
+    title: str
 
 class Task(BaseModel):
     model_config = ConfigDict(from_attributes=True)

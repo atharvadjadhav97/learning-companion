@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 from app.db.models import TaskListModel, TaskModel
-from app.schemas.task import Task, TaskCreate, TaskList, TaskListCreate
+from app.schemas.task import Task, TaskCreate, TaskList, TaskListCreate, TaskUpdate
 
 router = APIRouter(tags=["tasks"])
 
@@ -98,3 +98,40 @@ def toggle_task(task_id: int, db: Session = Depends(get_db)):
     db.refresh(task)
 
     return task
+
+@router.patch("/tasks/{task_id}", response_model=Task)
+def update_task(
+    task_id: int,
+    task_data: TaskUpdate,
+    db: Session = Depends(get_db),
+):
+    task = db.query(TaskModel).filter(TaskModel.id == task_id).first()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if not task_data.title.strip():
+        raise HTTPException(status_code=400, detail="Task title is required")
+
+    task.title = task_data.title.strip()
+
+    db.commit()
+    db.refresh(task)
+
+    return task
+
+
+@router.delete("/tasks/{task_id}")
+def delete_task(task_id: int, db: Session = Depends(get_db)):
+    task = db.query(TaskModel).filter(TaskModel.id == task_id).first()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    db.delete(task)
+    db.commit()
+
+    return {
+        "status": "ok",
+        "message": "Task deleted successfully",
+    }
