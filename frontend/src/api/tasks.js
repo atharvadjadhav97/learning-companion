@@ -104,3 +104,31 @@ export async function deleteTask(taskId) {
 
   return response.json();
 }
+
+export async function updateTaskList(taskListId, taskListData) {
+  const response = await fetch(`${API_BASE_URL}/task-lists/${taskListId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(taskListData),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response, "Failed to update task list"));
+  }
+
+  return response.json();
+}
+
+export async function deleteTaskList(taskListId) {
+  const response = await fetch(`${API_BASE_URL}/task-lists/${taskListId}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response, "Failed to delete task list"));
+  }
+
+  return response.json();
+}

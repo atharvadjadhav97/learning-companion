@@ -3,10 +3,12 @@ import {
   createTask,
   createTaskList,
   deleteTask,
+  deleteTaskList,
   getTaskLists,
   getTasks,
   toggleTask,
   updateTask,
+  updateTaskList,
 } from "../api/tasks";
 
 function TasksPage() {
@@ -17,6 +19,10 @@ function TasksPage() {
   const [newListName, setNewListName] = useState("");
   const [newListDescription, setNewListDescription] = useState("");
   const [newTaskTitle, setNewTaskTitle] = useState("");
+
+  const [editingListId, setEditingListId] = useState(null);
+  const [editingListName, setEditingListName] = useState("");
+  const [editingListDescription, setEditingListDescription] = useState("");
 
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingTaskTitle, setEditingTaskTitle] = useState("");
@@ -42,6 +48,10 @@ function TasksPage() {
 
       if (data.length > 0 && !selectedList) {
         setSelectedList(data[0]);
+      }
+
+      if (data.length === 0) {
+        setSelectedList(null);
       }
     } catch (error) {
       setErrorMessage(error.message || "Could not load task lists");
@@ -79,6 +89,79 @@ function TasksPage() {
       setSelectedList(createdList);
     } catch (error) {
       setErrorMessage(error.message || "Could not create task list");
+    }
+  }
+
+  function startEditingList(list) {
+    setEditingListId(list.id);
+    setEditingListName(list.name);
+    setEditingListDescription(list.description || "");
+    setErrorMessage("");
+  }
+
+  function cancelEditingList() {
+    setEditingListId(null);
+    setEditingListName("");
+    setEditingListDescription("");
+  }
+
+  async function handleSaveEditedList(listId) {
+    setErrorMessage("");
+
+    if (!editingListName.trim()) {
+      setErrorMessage("Task list name is required");
+      return;
+    }
+
+    try {
+      const updatedList = await updateTaskList(listId, {
+        name: editingListName.trim(),
+        description: editingListDescription.trim() || null,
+      });
+
+      setTaskLists((currentLists) =>
+        currentLists.map((list) =>
+          list.id === updatedList.id ? updatedList : list
+        )
+      );
+
+      if (selectedList?.id === updatedList.id) {
+        setSelectedList(updatedList);
+      }
+
+      cancelEditingList();
+    } catch (error) {
+      setErrorMessage(error.message || "Could not update task list");
+    }
+  }
+
+  async function handleDeleteTaskList(listId) {
+    setErrorMessage("");
+
+    const listToDelete = taskLists.find((list) => list.id === listId);
+
+    const shouldDelete = window.confirm(
+      `Are you sure you want to delete "${listToDelete?.name || "this list"}"? This will also delete all tasks inside it.`
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      await deleteTaskList(listId);
+
+      const remainingLists = taskLists.filter((list) => list.id !== listId);
+      setTaskLists(remainingLists);
+
+      if (selectedList?.id === listId) {
+        setSelectedList(remainingLists[0] || null);
+      }
+
+      cancelEditingList();
+      cancelEditingTask();
+    } catch (error) {
+      setErrorMessage(error.message || "Could not delete task list");
     }
   }
 
@@ -256,25 +339,85 @@ function TasksPage() {
             ) : (
               <div className="task-list-menu">
                 {taskLists.map((list) => (
-                  <button
+                  <div
                     key={list.id}
-                    type="button"
-                    onClick={() => {
-                      setErrorMessage("");
-                      setSelectedList(list);
-                      cancelEditingTask();
-                    }}
                     className={
                       selectedList?.id === list.id
-                        ? "task-list-card selected"
-                        : "task-list-card"
+                        ? "task-list-card task-list-card-with-actions selected"
+                        : "task-list-card task-list-card-with-actions"
                     }
                   >
-                    <div>
-                      <strong>{list.name}</strong>
-                      {list.description && <span>{list.description}</span>}
-                    </div>
-                  </button>
+                    {editingListId === list.id ? (
+                      <div className="list-edit-area">
+                        <input
+                          value={editingListName}
+                          onChange={(event) =>
+                            setEditingListName(event.target.value)
+                          }
+                          placeholder="List name"
+                        />
+
+                        <textarea
+                          value={editingListDescription}
+                          onChange={(event) =>
+                            setEditingListDescription(event.target.value)
+                          }
+                          placeholder="Optional description"
+                        />
+
+                        <div className="task-actions">
+                          <button
+                            type="button"
+                            className="primary-button small-button"
+                            onClick={() => handleSaveEditedList(list.id)}
+                          >
+                            Save
+                          </button>
+
+                          <button
+                            type="button"
+                            className="secondary-button small-button"
+                            onClick={cancelEditingList}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="list-select-button"
+                          onClick={() => {
+                            setErrorMessage("");
+                            setSelectedList(list);
+                            cancelEditingTask();
+                          }}
+                        >
+                          <strong>{list.name}</strong>
+                          {list.description && <span>{list.description}</span>}
+                        </button>
+
+                        <div className="task-actions list-actions">
+                          <button
+                            type="button"
+                            className="secondary-button small-button"
+                            onClick={() => startEditingList(list)}
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            className="danger-button small-button"
+                            onClick={() => handleDeleteTaskList(list.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
