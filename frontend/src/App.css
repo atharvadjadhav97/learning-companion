@@ -609,3 +609,44 @@ textarea {
     flex-wrap: wrap;
   }
 }
+
+.task-list-card-with-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.list-select-button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.list-select-button strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.list-select-button span {
+  display: block;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.list-actions {
+  justify-content: flex-start;
+}
+
+.list-edit-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.list-edit-area input,
+.list-edit-area textarea {
+  margin-top: 0;
+}

@@ -6,6 +6,10 @@ from typing import Optional
 class TaskListCreate(BaseModel):
     name: str
     description: Optional[str] = None
+    
+class TaskListUpdate(BaseModel):
+    name: str
+    description: Optional[str] = None
 
 
 class TaskList(BaseModel):
