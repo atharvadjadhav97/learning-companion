@@ -650,3 +650,54 @@ textarea {
 .list-edit-area textarea {
   margin-top: 0;
 }
+
+.brain-dump-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.brain-dump-textarea {
+  min-height: 220px;
+}
+
+.brain-dump-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.brain-dump-card {
+  border: 1px solid #2b3140;
+  border-radius: 16px;
+  background: #111827;
+  padding: 1rem;
+}
+
+.brain-dump-card p {
+  white-space: pre-wrap;
+  color: #d1d5db;
+  line-height: 1.55;
+  margin-top: 0;
+}
+
+.brain-dump-card-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  border-top: 1px solid #2b3140;
+  padding-top: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.brain-dump-card-footer small {
+  color: #9ca3af;
+}
+
+@media (max-width: 900px) {
+  .brain-dump-layout {
+    grid-template-columns: 1fr;
+  }
+}
