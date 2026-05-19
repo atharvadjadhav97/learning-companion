@@ -7,6 +7,7 @@ from app.api.topics import router as topics_router
 from app.db.database import Base, engine
 from app.db import models
 from app.api.tasks import router as tasks_router
+from app.api.brain_dumps import router as brain_dumps_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -24,7 +25,7 @@ app.include_router(topics_router)
 app.include_router(learning_inputs_router)
 app.include_router(summaries_router)
 app.include_router(tasks_router)
-
+app.include_router(brain_dumps_router)
 
 @app.get("/health")
 def health_check():
