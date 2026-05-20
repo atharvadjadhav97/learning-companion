@@ -2,12 +2,12 @@ const navItems = [
   {
     id: "today",
     label: "Today",
-    description: "Daily command center",
+    description: "What to pick up",
   },
   {
     id: "areas",
     label: "Areas",
-    description: "Tasks by life/work area",
+    description: "Tasks by area",
   },
   {
     id: "brain-dump",
@@ -21,9 +21,26 @@ const navItems = [
   },
 ];
 
-function Sidebar({ activeSection, onSectionChange }) {
+function Sidebar({
+  activeSection,
+  onSectionChange,
+  isSidebarOpen,
+  onToggleSidebar,
+}) {
+  if (!isSidebarOpen) {
+    return null;
+  }
+
   return (
     <aside className="sidebar">
+      <button
+        type="button"
+        className="sidebar-toggle"
+        onClick={onToggleSidebar}
+      >
+        ☰
+      </button>
+
       <div className="sidebar-header">
         <div className="app-logo">PC</div>
         <div>

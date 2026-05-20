@@ -8,6 +8,7 @@ import "./App.css";
 
 function App() {
   const [activeSection, setActiveSection] = useState("today");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [apiMessage, setApiMessage] = useState("Checking backend...");
 
   useEffect(() => {
@@ -42,13 +43,27 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={isSidebarOpen ? "app-shell" : "app-shell sidebar-closed"}>
       <Sidebar
         activeSection={activeSection}
         onSectionChange={setActiveSection}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={() => setIsSidebarOpen((current) => !current)}
       />
 
-      <main className="main-content">{renderActiveSection()}</main>
+      <main className="main-content">
+        {!isSidebarOpen && (
+          <button
+            type="button"
+            className="floating-menu-button"
+            onClick={() => setIsSidebarOpen(true)}
+          >
+            ☰
+          </button>
+        )}
+
+        {renderActiveSection()}
+      </main>
     </div>
   );
 }
