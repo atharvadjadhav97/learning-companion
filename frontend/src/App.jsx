@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import Sidebar from "./components/Sidebar";
-import DashboardPage from "./pages/DashboardPage";
-import LearningPage from "./pages/LearningPage";
+import TodayPage from "./pages/TodayPage";
 import TasksPage from "./pages/TasksPage";
 import BrainDumpPage from "./pages/BrainDumpPage";
 import SettingsPage from "./pages/SettingsPage";
 import "./App.css";
 
 function App() {
-  const [activeSection, setActiveSection] = useState("learning");
+  const [activeSection, setActiveSection] = useState("today");
   const [apiMessage, setApiMessage] = useState("Checking backend...");
 
   useEffect(() => {
@@ -23,15 +22,11 @@ function App() {
   }, []);
 
   function renderActiveSection() {
-    if (activeSection === "dashboard") {
-      return <DashboardPage />;
+    if (activeSection === "today") {
+      return <TodayPage onNavigate={setActiveSection} />;
     }
 
-    if (activeSection === "learning") {
-      return <LearningPage />;
-    }
-
-    if (activeSection === "tasks") {
+    if (activeSection === "areas") {
       return <TasksPage />;
     }
 
@@ -43,7 +38,7 @@ function App() {
       return <SettingsPage apiMessage={apiMessage} />;
     }
 
-    return <LearningPage />;
+    return <TodayPage onNavigate={setActiveSection} />;
   }
 
   return (
@@ -53,9 +48,7 @@ function App() {
         onSectionChange={setActiveSection}
       />
 
-      <main className="main-content">
-        {renderActiveSection()}
-      </main>
+      <main className="main-content">{renderActiveSection()}</main>
     </div>
   );
 }

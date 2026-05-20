@@ -15,9 +15,19 @@ function SettingsPage({ apiMessage }) {
       </section>
 
       <section className="panel">
+        <h3>Current App Direction</h3>
+        <p className="muted-text">
+          This app is now focused on daily execution: Today, Areas, Tasks, and
+          Brain Dumps. Learning notes can stay in NotebookLM or return later as
+          a lighter section.
+        </p>
+      </section>
+
+      <section className="panel">
         <h3>AI Cost Reminder</h3>
         <p className="muted-text">
-          Keep AI_PROVIDER=mock in backend/.env when you do not want to make paid API calls.
+          Keep AI_PROVIDER=mock in backend/.env when you do not want to make
+          paid API calls.
         </p>
       </section>
     </div>

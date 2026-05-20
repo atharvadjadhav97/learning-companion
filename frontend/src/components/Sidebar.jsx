@@ -1,18 +1,13 @@
 const navItems = [
   {
-    id: "dashboard",
-    label: "Dashboard",
-    description: "Overview",
+    id: "today",
+    label: "Today",
+    description: "Daily command center",
   },
   {
-    id: "learning",
-    label: "Learning",
-    description: "Topics and summaries",
-  },
-  {
-    id: "tasks",
-    label: "Tasks",
-    description: "To-dos and lists",
+    id: "areas",
+    label: "Areas",
+    description: "Tasks by life/work area",
   },
   {
     id: "brain-dump",
@@ -30,10 +25,10 @@ function Sidebar({ activeSection, onSectionChange }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <div className="app-logo">AI</div>
+        <div className="app-logo">PC</div>
         <div>
-          <h1>Personal AI</h1>
-          <p>Workspace</p>
+          <h1>Personal Command</h1>
+          <p>Center</p>
         </div>
       </div>
 

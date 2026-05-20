@@ -269,11 +269,12 @@ function TasksPage() {
     <div className="page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Tasks</p>
-          <h2>Task Lists</h2>
-          <p>
-            Organize personal tasks into focused lists instead of one giant to-do pile.
-          </p>
+            <p className="eyebrow">Areas</p>
+                <h2>Areas & Tasks</h2>
+            <p>
+                Organize responsibilities like Job Hunt, Client Work, Personal, Groceries,
+                and projects into focused areas.
+            </p>
         </div>
       </header>
 
@@ -299,8 +300,8 @@ function TasksPage() {
       <div className="tasks-layout">
         <section className="panel task-list-panel">
           <div className="panel-header">
-            <h3>Create List</h3>
-            <p>Add focused areas like Groceries, Personal, or Project tasks.</p>
+            <h3>Create Area</h3>
+            <p>Add areas like Job Hunt, Client Work, Personal, Groceries, or Projects.</p>
           </div>
 
           <form onSubmit={handleCreateTaskList} className="form-stack">
@@ -325,16 +326,16 @@ function TasksPage() {
             </label>
 
             <button type="submit" className="primary-button">
-              Create List
+              Create Area
             </button>
           </form>
 
           <div className="topic-list-section">
-            <h3>Lists</h3>
+            <h3>Areas</h3>
 
             {taskLists.length === 0 ? (
               <p className="muted-text">
-                No task lists yet. Create your first list.
+                No areas yet. Create your first area.
               </p>
             ) : (
               <div className="task-list-menu">
