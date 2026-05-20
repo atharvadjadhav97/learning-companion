@@ -1170,3 +1170,254 @@ textarea {
 .completed-task-row small {
   color: #bfdbfe;
 }
+
+.areas-page {
+  max-width: 1120px;
+}
+
+.areas-header {
+  margin-bottom: 1.25rem;
+}
+
+.clean-areas-layout {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.clean-area-sidebar,
+.clean-task-panel {
+  min-height: 560px;
+}
+
+.clean-section-header,
+.selected-area-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.clean-section-header h3,
+.selected-area-header h3 {
+  margin: 0.2rem 0;
+}
+
+.clean-section-header p,
+.selected-area-header p {
+  margin: 0;
+  color: #94a3b8;
+}
+
+.icon-add-button {
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  border: 1px solid #334155;
+  background: #111827;
+  color: #dbeafe;
+  font-size: 1.35rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+
+.icon-add-button:hover {
+  border-color: #60a5fa;
+  background: #172033;
+}
+
+.inline-create-box {
+  border: 1px solid #253047;
+  background: #0b1220;
+  border-radius: 16px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.inline-create-box input,
+.inline-create-box textarea {
+  margin-top: 0;
+}
+
+.inline-create-box textarea {
+  min-height: 70px;
+}
+
+.compact-action-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.clean-area-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.clean-area-card {
+  border: 1px solid #253047;
+  background: #0b1220;
+  border-radius: 16px;
+  padding: 0.8rem;
+}
+
+.clean-area-card.selected {
+  border-color: #60a5fa;
+  background: #101b2f;
+}
+
+.clean-area-select {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: #e5e7eb;
+  padding: 0;
+}
+
+.clean-area-select strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.clean-area-select span {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.quiet-actions {
+  display: flex;
+  gap: 0.85rem;
+  margin-top: 0.7rem;
+}
+
+.quiet-actions button,
+.clean-task-actions button {
+  border: 0;
+  background: transparent;
+  color: #94a3b8;
+  padding: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.quiet-actions button:hover,
+.clean-task-actions button:hover {
+  color: #bfdbfe;
+}
+
+.task-section-block {
+  margin-top: 1.4rem;
+}
+
+.task-section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.65rem;
+}
+
+.task-section-title h4 {
+  margin: 0;
+  color: #dbeafe;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.clean-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.clean-task-row {
+  border: 1px solid #253047;
+  background: #0b1220;
+  border-radius: 16px;
+  padding: 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.clean-task-row.completed {
+  opacity: 0.68;
+}
+
+.clean-task-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #e5e7eb;
+  flex: 1;
+}
+
+.clean-task-main input[type='checkbox'] {
+  width: auto;
+  margin: 0;
+}
+
+.clean-task-main span {
+  line-height: 1.45;
+}
+
+.clean-task-row.completed .clean-task-main span {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.clean-task-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  white-space: nowrap;
+}
+
+.today-pill {
+  border: 1px solid #334155 !important;
+  background: #111827 !important;
+  color: #bfdbfe !important;
+  border-radius: 999px !important;
+  padding: 0.25rem 0.6rem !important;
+}
+
+.today-pill.active {
+  background: #1e40af !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+
+.task-inline-edit-input {
+  margin-top: 0;
+}
+
+@media (max-width: 950px) {
+  .clean-areas-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .clean-area-sidebar,
+  .clean-task-panel {
+    min-height: auto;
+  }
+
+  .clean-task-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .clean-task-actions {
+    flex-wrap: wrap;
+  }
+}

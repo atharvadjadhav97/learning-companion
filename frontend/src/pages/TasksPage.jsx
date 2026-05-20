@@ -17,6 +17,9 @@ function TasksPage() {
   const [selectedList, setSelectedList] = useState(null);
   const [tasks, setTasks] = useState([]);
 
+  const [isCreatingArea, setIsCreatingArea] = useState(false);
+  const [isAddingTask, setIsAddingTask] = useState(false);
+
   const [newListName, setNewListName] = useState("");
   const [newListDescription, setNewListDescription] = useState("");
   const [newTaskTitle, setNewTaskTitle] = useState("");
@@ -85,6 +88,7 @@ function TasksPage() {
 
       setNewListName("");
       setNewListDescription("");
+      setIsCreatingArea(false);
 
       await loadTaskLists();
       setSelectedList(createdList);
@@ -188,6 +192,7 @@ function TasksPage() {
       });
 
       setNewTaskTitle("");
+      setIsAddingTask(false);
       await loadTasks(selectedList.id);
     } catch (error) {
       setErrorMessage(error.message || "Could not create task");
@@ -279,12 +284,12 @@ function TasksPage() {
     }
   }
 
-  const completedTasks = tasks.filter((task) => task.is_done === 1).length;
-  const openTasks = tasks.length - completedTasks;
+  const pendingTasks = tasks.filter((task) => task.is_done === 0);
+  const completedTasks = tasks.filter((task) => task.is_done === 1);
 
   return (
-    <div className="page">
-      <header className="page-header">
+    <div className="page areas-page">
+      <header className="page-header areas-header">
         <div>
           <p className="eyebrow">Areas</p>
           <h2>Areas & Tasks</h2>
@@ -297,271 +302,352 @@ function TasksPage() {
 
       {errorMessage && <div className="error-banner">{errorMessage}</div>}
 
-      <div className="task-stats-grid">
-        <section className="stat-card">
-          <span>Areas</span>
-          <strong>{taskLists.length}</strong>
-        </section>
+      <div className="clean-areas-layout">
+        <section className="panel clean-area-sidebar">
+          <div className="clean-section-header">
+            <div>
+              <h3>Areas</h3>
+              <p>Pick the area you want to work from.</p>
+            </div>
 
-        <section className="stat-card">
-          <span>Selected open</span>
-          <strong>{openTasks}</strong>
-        </section>
-
-        <section className="stat-card">
-          <span>Selected completed</span>
-          <strong>{completedTasks}</strong>
-        </section>
-      </div>
-
-      <div className="tasks-layout">
-        <section className="panel task-list-panel">
-          <div className="panel-header">
-            <h3>Create Area</h3>
-            <p>
-              Add areas like Job Hunt, Client Work, Personal, Groceries, or
-              Projects.
-            </p>
+            <button
+              type="button"
+              className="icon-add-button"
+              onClick={() => {
+                setIsCreatingArea((current) => !current);
+                cancelEditingList();
+              }}
+            >
+              +
+            </button>
           </div>
 
-          <form onSubmit={handleCreateTaskList} className="form-stack">
-            <label>
-              Area Name
+          {isCreatingArea && (
+            <form onSubmit={handleCreateTaskList} className="inline-create-box">
               <input
                 value={newListName}
                 onChange={(event) => setNewListName(event.target.value)}
-                placeholder="Example: Job Hunt"
+                placeholder="Area name"
               />
-            </label>
 
-            <label>
-              Description
               <textarea
                 value={newListDescription}
                 onChange={(event) =>
                   setNewListDescription(event.target.value)
                 }
-                placeholder="Optional short description"
+                placeholder="Optional description"
               />
-            </label>
 
-            <button type="submit" className="primary-button">
-              Create Area
-            </button>
-          </form>
+              <div className="compact-action-row">
+                <button type="submit" className="primary-button small-button">
+                  Save
+                </button>
 
-          <div className="topic-list-section">
-            <h3>Areas</h3>
+                <button
+                  type="button"
+                  className="secondary-button small-button"
+                  onClick={() => {
+                    setIsCreatingArea(false);
+                    setNewListName("");
+                    setNewListDescription("");
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
 
-            {taskLists.length === 0 ? (
-              <p className="muted-text">
-                No areas yet. Create your first area.
-              </p>
-            ) : (
-              <div className="task-list-menu">
-                {taskLists.map((list) => (
-                  <div
-                    key={list.id}
-                    className={
-                      selectedList?.id === list.id
-                        ? "task-list-card task-list-card-with-actions selected"
-                        : "task-list-card task-list-card-with-actions"
-                    }
-                  >
-                    {editingListId === list.id ? (
-                      <div className="list-edit-area">
-                        <input
-                          value={editingListName}
-                          onChange={(event) =>
-                            setEditingListName(event.target.value)
-                          }
-                          placeholder="Area name"
-                        />
+          {taskLists.length === 0 ? (
+            <p className="muted-text">No areas yet. Add your first area.</p>
+          ) : (
+            <div className="clean-area-list">
+              {taskLists.map((list) => (
+                <div
+                  key={list.id}
+                  className={
+                    selectedList?.id === list.id
+                      ? "clean-area-card selected"
+                      : "clean-area-card"
+                  }
+                >
+                  {editingListId === list.id ? (
+                    <div className="list-edit-area">
+                      <input
+                        value={editingListName}
+                        onChange={(event) =>
+                          setEditingListName(event.target.value)
+                        }
+                        placeholder="Area name"
+                      />
 
-                        <textarea
-                          value={editingListDescription}
-                          onChange={(event) =>
-                            setEditingListDescription(event.target.value)
-                          }
-                          placeholder="Optional description"
-                        />
+                      <textarea
+                        value={editingListDescription}
+                        onChange={(event) =>
+                          setEditingListDescription(event.target.value)
+                        }
+                        placeholder="Optional description"
+                      />
 
-                        <div className="task-actions">
-                          <button
-                            type="button"
-                            className="primary-button small-button"
-                            onClick={() => handleSaveEditedList(list.id)}
-                          >
-                            Save
-                          </button>
-
-                          <button
-                            type="button"
-                            className="secondary-button small-button"
-                            onClick={cancelEditingList}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
+                      <div className="compact-action-row">
                         <button
                           type="button"
-                          className="list-select-button"
-                          onClick={() => {
-                            setErrorMessage("");
-                            setSelectedList(list);
-                            cancelEditingTask();
-                          }}
+                          className="primary-button small-button"
+                          onClick={() => handleSaveEditedList(list.id)}
                         >
-                          <strong>{list.name}</strong>
-                          {list.description && <span>{list.description}</span>}
+                          Save
                         </button>
 
-                        <div className="task-actions list-actions">
-                          <button
-                            type="button"
-                            className="secondary-button small-button"
-                            onClick={() => startEditingList(list)}
-                          >
-                            Edit
-                          </button>
+                        <button
+                          type="button"
+                          className="secondary-button small-button"
+                          onClick={cancelEditingList}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="clean-area-select"
+                        onClick={() => {
+                          setSelectedList(list);
+                          setErrorMessage("");
+                          setIsAddingTask(false);
+                          cancelEditingTask();
+                        }}
+                      >
+                        <strong>{list.name}</strong>
+                        {list.description && <span>{list.description}</span>}
+                      </button>
 
-                          <button
-                            type="button"
-                            className="danger-button small-button"
-                            onClick={() => handleDeleteTaskList(list.id)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                      <div className="quiet-actions">
+                        <button
+                          type="button"
+                          onClick={() => startEditingList(list)}
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTaskList(list.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
-        <section className="panel task-detail-panel">
+        <section className="panel clean-task-panel">
           {!selectedList ? (
             <div className="empty-state">
               <h3>Select an area</h3>
-              <p>Choose or create an area to view and add tasks.</p>
+              <p>Choose or create an area to view tasks.</p>
             </div>
           ) : (
             <>
-              <div className="panel-header">
-                <p className="eyebrow">Selected Area</p>
-                <h3>{selectedList.name}</h3>
-                {selectedList.description && <p>{selectedList.description}</p>}
+              <div className="selected-area-header">
+                <div>
+                  <p className="eyebrow">Selected Area</p>
+                  <h3>{selectedList.name}</h3>
+                  {selectedList.description && (
+                    <p>{selectedList.description}</p>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  className="icon-add-button"
+                  onClick={() => {
+                    setIsAddingTask((current) => !current);
+                    cancelEditingTask();
+                  }}
+                >
+                  +
+                </button>
               </div>
 
-              <form onSubmit={handleAddTask} className="task-add-row">
-                <input
-                  value={newTaskTitle}
-                  onChange={(event) => setNewTaskTitle(event.target.value)}
-                  placeholder={`Add task to ${selectedList.name}`}
-                />
+              {isAddingTask && (
+                <form onSubmit={handleAddTask} className="inline-create-box">
+                  <input
+                    value={newTaskTitle}
+                    onChange={(event) => setNewTaskTitle(event.target.value)}
+                    placeholder={`Add task to ${selectedList.name}`}
+                  />
 
-                <button type="submit" className="primary-button">
-                  Add Task
-                </button>
-              </form>
+                  <div className="compact-action-row">
+                    <button type="submit" className="primary-button small-button">
+                      Save
+                    </button>
 
-              <div className="task-items">
-                {tasks.length === 0 ? (
-                  <p className="muted-text">No tasks in this area yet.</p>
-                ) : (
-                  tasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className={
-                        task.is_done === 1
-                          ? "task-item task-item-row completed"
-                          : "task-item task-item-row"
-                      }
+                    <button
+                      type="button"
+                      className="secondary-button small-button"
+                      onClick={() => {
+                        setIsAddingTask(false);
+                        setNewTaskTitle("");
+                      }}
                     >
-                      <label className="task-check-label">
-                        <input
-                          type="checkbox"
-                          checked={task.is_done === 1}
-                          onChange={() => handleToggleTask(task.id)}
-                        />
-                      </label>
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
 
-                      {editingTaskId === task.id ? (
-                        <div className="task-edit-area">
-                          <input
-                            value={editingTaskTitle}
-                            onChange={(event) =>
-                              setEditingTaskTitle(event.target.value)
-                            }
-                          />
+              <div className="task-section-block">
+                <div className="task-section-title">
+                  <h4>Pending</h4>
+                </div>
 
-                          <div className="task-actions">
-                            <button
-                              type="button"
-                              className="primary-button small-button"
-                              onClick={() => handleSaveEditedTask(task.id)}
-                            >
-                              Save
-                            </button>
+                {pendingTasks.length === 0 ? (
+                  <p className="muted-text">No pending tasks in this area.</p>
+                ) : (
+                  <div className="clean-task-list">
+                    {pendingTasks.map((task) => (
+                      <TaskRow
+                        key={task.id}
+                        task={task}
+                        editingTaskId={editingTaskId}
+                        editingTaskTitle={editingTaskTitle}
+                        setEditingTaskTitle={setEditingTaskTitle}
+                        onToggleTask={handleToggleTask}
+                        onToggleToday={handleToggleTaskToday}
+                        onStartEdit={startEditingTask}
+                        onCancelEdit={cancelEditingTask}
+                        onSaveEdit={handleSaveEditedTask}
+                        onDelete={handleDeleteTask}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
 
-                            <button
-                              type="button"
-                              className="secondary-button small-button"
-                              onClick={cancelEditingTask}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <span className="task-title">{task.title}</span>
+              <div className="task-section-block">
+                <div className="task-section-title">
+                  <h4>Completed</h4>
+                </div>
 
-                          <div className="task-actions">
-                            <button
-                              type="button"
-                              className={
-                                task.is_today === 1
-                                  ? "today-button active small-button"
-                                  : "today-button small-button"
-                              }
-                              onClick={() => handleToggleTaskToday(task.id)}
-                            >
-                              {task.is_today === 1 ? "Today" : "Add Today"}
-                            </button>
-
-                            <button
-                              type="button"
-                              className="secondary-button small-button"
-                              onClick={() => startEditingTask(task)}
-                            >
-                              Edit
-                            </button>
-
-                            <button
-                              type="button"
-                              className="danger-button small-button"
-                              onClick={() => handleDeleteTask(task.id)}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))
+                {completedTasks.length === 0 ? (
+                  <p className="muted-text">No completed tasks in this area.</p>
+                ) : (
+                  <div className="clean-task-list">
+                    {completedTasks.map((task) => (
+                      <TaskRow
+                        key={task.id}
+                        task={task}
+                        editingTaskId={editingTaskId}
+                        editingTaskTitle={editingTaskTitle}
+                        setEditingTaskTitle={setEditingTaskTitle}
+                        onToggleTask={handleToggleTask}
+                        onToggleToday={handleToggleTaskToday}
+                        onStartEdit={startEditingTask}
+                        onCancelEdit={cancelEditingTask}
+                        onSaveEdit={handleSaveEditedTask}
+                        onDelete={handleDeleteTask}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
             </>
           )}
         </section>
       </div>
+    </div>
+  );
+}
+
+function TaskRow({
+  task,
+  editingTaskId,
+  editingTaskTitle,
+  setEditingTaskTitle,
+  onToggleTask,
+  onToggleToday,
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onDelete,
+}) {
+  const isEditing = editingTaskId === task.id;
+
+  return (
+    <div
+      className={
+        task.is_done === 1
+          ? "clean-task-row completed"
+          : "clean-task-row"
+      }
+    >
+      <label className="clean-task-main">
+        <input
+          type="checkbox"
+          checked={task.is_done === 1}
+          onChange={() => onToggleTask(task.id)}
+        />
+
+        {isEditing ? (
+          <input
+            value={editingTaskTitle}
+            onChange={(event) => setEditingTaskTitle(event.target.value)}
+            className="task-inline-edit-input"
+          />
+        ) : (
+          <span>{task.title}</span>
+        )}
+      </label>
+
+      {isEditing ? (
+        <div className="compact-action-row">
+          <button
+            type="button"
+            className="primary-button small-button"
+            onClick={() => onSaveEdit(task.id)}
+          >
+            Save
+          </button>
+
+          <button
+            type="button"
+            className="secondary-button small-button"
+            onClick={onCancelEdit}
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <div className="clean-task-actions">
+          {task.is_done === 0 && (
+            <button
+              type="button"
+              className={
+                task.is_today === 1
+                  ? "today-pill active"
+                  : "today-pill"
+              }
+              onClick={() => onToggleToday(task.id)}
+            >
+              {task.is_today === 1 ? "Today" : "Add Today"}
+            </button>
+          )}
+
+          <button type="button" onClick={() => onStartEdit(task)}>
+            Edit
+          </button>
+
+          <button type="button" onClick={() => onDelete(task.id)}>
+            Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 }
