@@ -65,6 +65,8 @@ class TaskModel(Base):
 
     title = Column(String(500), nullable=False)
     is_done = Column(Integer, nullable=False, default=0)
+    is_today = Column(Integer, nullable=False, default=0)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

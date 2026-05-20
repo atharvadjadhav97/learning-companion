@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.api.learning_inputs import router as learning_inputs_router
 from app.api.summaries import router as summaries_router
@@ -10,6 +11,29 @@ from app.api.tasks import router as tasks_router
 from app.api.brain_dumps import router as brain_dumps_router
 
 Base.metadata.create_all(bind=engine)
+
+def ensure_task_columns():
+    with engine.connect() as connection:
+        existing_columns = connection.execute(
+            text("PRAGMA table_info(tasks)")
+        ).fetchall()
+
+        column_names = [column[1] for column in existing_columns]
+
+        if "is_today" not in column_names:
+            connection.execute(
+                text("ALTER TABLE tasks ADD COLUMN is_today INTEGER NOT NULL DEFAULT 0")
+            )
+
+        if "completed_at" not in column_names:
+            connection.execute(
+                text("ALTER TABLE tasks ADD COLUMN completed_at DATETIME")
+            )
+
+        connection.commit()
+
+
+ensure_task_columns()
 
 app = FastAPI(title="Learning Companion API")
 

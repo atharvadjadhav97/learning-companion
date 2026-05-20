@@ -1092,3 +1092,81 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
+.today-button {
+  border: 1px solid #334155;
+  background: #111827;
+  color: #bfdbfe;
+  border-radius: 12px;
+  font-weight: 800;
+}
+
+.today-button.active {
+  background: #1e40af;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+.today-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.today-task-row {
+  border: 1px solid #263244;
+  background: #0b1220;
+  border-radius: 16px;
+  padding: 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.today-task-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #e5e7eb;
+  font-weight: 700;
+}
+
+.today-task-row input {
+  width: auto;
+  margin: 0;
+}
+
+.today-task-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.today-task-meta small {
+  color: #bfdbfe;
+  background: #1e293b;
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+  white-space: nowrap;
+}
+
+.completed-today-panel {
+  margin-bottom: 1.25rem;
+}
+
+.completed-task-row {
+  border: 1px solid #263244;
+  background: #0b1220;
+  border-radius: 14px;
+  padding: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #94a3b8;
+}
+
+.completed-task-row small {
+  color: #bfdbfe;
+}
