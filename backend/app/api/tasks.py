@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from app.db.database import get_db
 from app.db.models import TaskListModel, TaskModel
@@ -147,7 +148,12 @@ def toggle_task(task_id: int, db: Session = Depends(get_db)):
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    task.is_done = 0 if task.is_done else 1
+    if task.is_done:
+        task.is_done = 0
+        task.completed_at = None
+    else:
+        task.is_done = 1
+        task.completed_at = datetime.utcnow()
 
     db.commit()
     db.refresh(task)
@@ -190,3 +196,17 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
         "status": "ok",
         "message": "Task deleted successfully",
     }
+
+@router.patch("/tasks/{task_id}/today", response_model=Task)
+def toggle_task_today(task_id: int, db: Session = Depends(get_db)):
+    task = db.query(TaskModel).filter(TaskModel.id == task_id).first()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task.is_today = 0 if task.is_today else 1
+
+    db.commit()
+    db.refresh(task)
+
+    return task

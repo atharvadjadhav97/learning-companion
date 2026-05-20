@@ -34,4 +34,6 @@ class Task(BaseModel):
     task_list_id: int
     title: str
     is_done: int
+    is_today: int
+    completed_at: Optional[datetime] = None
     created_at: Optional[datetime] = None

@@ -7,6 +7,7 @@ import {
   getTaskLists,
   getTasks,
   toggleTask,
+  toggleTaskToday,
   updateTask,
   updateTaskList,
 } from "../api/tasks";
@@ -54,7 +55,7 @@ function TasksPage() {
         setSelectedList(null);
       }
     } catch (error) {
-      setErrorMessage(error.message || "Could not load task lists");
+      setErrorMessage(error.message || "Could not load areas");
     }
   }
 
@@ -72,7 +73,7 @@ function TasksPage() {
     setErrorMessage("");
 
     if (!newListName.trim()) {
-      setErrorMessage("Task list name is required");
+      setErrorMessage("Area name is required");
       return;
     }
 
@@ -88,7 +89,7 @@ function TasksPage() {
       await loadTaskLists();
       setSelectedList(createdList);
     } catch (error) {
-      setErrorMessage(error.message || "Could not create task list");
+      setErrorMessage(error.message || "Could not create area");
     }
   }
 
@@ -109,7 +110,7 @@ function TasksPage() {
     setErrorMessage("");
 
     if (!editingListName.trim()) {
-      setErrorMessage("Task list name is required");
+      setErrorMessage("Area name is required");
       return;
     }
 
@@ -131,7 +132,7 @@ function TasksPage() {
 
       cancelEditingList();
     } catch (error) {
-      setErrorMessage(error.message || "Could not update task list");
+      setErrorMessage(error.message || "Could not update area");
     }
   }
 
@@ -141,7 +142,9 @@ function TasksPage() {
     const listToDelete = taskLists.find((list) => list.id === listId);
 
     const shouldDelete = window.confirm(
-      `Are you sure you want to delete "${listToDelete?.name || "this list"}"? This will also delete all tasks inside it.`
+      `Are you sure you want to delete "${
+        listToDelete?.name || "this area"
+      }"? This will also delete all tasks inside it.`
     );
 
     if (!shouldDelete) {
@@ -161,7 +164,7 @@ function TasksPage() {
       cancelEditingList();
       cancelEditingTask();
     } catch (error) {
-      setErrorMessage(error.message || "Could not delete task list");
+      setErrorMessage(error.message || "Could not delete area");
     }
   }
 
@@ -170,7 +173,7 @@ function TasksPage() {
     setErrorMessage("");
 
     if (!selectedList) {
-      setErrorMessage("Select a task list first");
+      setErrorMessage("Select an area first");
       return;
     }
 
@@ -202,6 +205,20 @@ function TasksPage() {
       }
     } catch (error) {
       setErrorMessage(error.message || "Could not update task");
+    }
+  }
+
+  async function handleToggleTaskToday(taskId) {
+    setErrorMessage("");
+
+    try {
+      await toggleTaskToday(taskId);
+
+      if (selectedList) {
+        await loadTasks(selectedList.id);
+      }
+    } catch (error) {
+      setErrorMessage(error.message || "Could not update today status");
     }
   }
 
@@ -269,12 +286,12 @@ function TasksPage() {
     <div className="page">
       <header className="page-header">
         <div>
-            <p className="eyebrow">Areas</p>
-                <h2>Areas & Tasks</h2>
-            <p>
-                Organize responsibilities like Job Hunt, Client Work, Personal, Groceries,
-                and projects into focused areas.
-            </p>
+          <p className="eyebrow">Areas</p>
+          <h2>Areas & Tasks</h2>
+          <p>
+            Organize responsibilities like Job Hunt, Client Work, Personal,
+            Groceries, and projects into focused areas.
+          </p>
         </div>
       </header>
 
@@ -282,7 +299,7 @@ function TasksPage() {
 
       <div className="task-stats-grid">
         <section className="stat-card">
-          <span>Lists</span>
+          <span>Areas</span>
           <strong>{taskLists.length}</strong>
         </section>
 
@@ -301,16 +318,19 @@ function TasksPage() {
         <section className="panel task-list-panel">
           <div className="panel-header">
             <h3>Create Area</h3>
-            <p>Add areas like Job Hunt, Client Work, Personal, Groceries, or Projects.</p>
+            <p>
+              Add areas like Job Hunt, Client Work, Personal, Groceries, or
+              Projects.
+            </p>
           </div>
 
           <form onSubmit={handleCreateTaskList} className="form-stack">
             <label>
-              List Name
+              Area Name
               <input
                 value={newListName}
                 onChange={(event) => setNewListName(event.target.value)}
-                placeholder="Example: Groceries"
+                placeholder="Example: Job Hunt"
               />
             </label>
 
@@ -355,7 +375,7 @@ function TasksPage() {
                           onChange={(event) =>
                             setEditingListName(event.target.value)
                           }
-                          placeholder="List name"
+                          placeholder="Area name"
                         />
 
                         <textarea
@@ -428,13 +448,13 @@ function TasksPage() {
         <section className="panel task-detail-panel">
           {!selectedList ? (
             <div className="empty-state">
-              <h3>Select a list</h3>
-              <p>Choose or create a list to view and add tasks.</p>
+              <h3>Select an area</h3>
+              <p>Choose or create an area to view and add tasks.</p>
             </div>
           ) : (
             <>
               <div className="panel-header">
-                <p className="eyebrow">Selected List</p>
+                <p className="eyebrow">Selected Area</p>
                 <h3>{selectedList.name}</h3>
                 {selectedList.description && <p>{selectedList.description}</p>}
               </div>
@@ -453,7 +473,7 @@ function TasksPage() {
 
               <div className="task-items">
                 {tasks.length === 0 ? (
-                  <p className="muted-text">No tasks in this list yet.</p>
+                  <p className="muted-text">No tasks in this area yet.</p>
                 ) : (
                   tasks.map((task) => (
                     <div
@@ -504,6 +524,18 @@ function TasksPage() {
                           <span className="task-title">{task.title}</span>
 
                           <div className="task-actions">
+                            <button
+                              type="button"
+                              className={
+                                task.is_today === 1
+                                  ? "today-button active small-button"
+                                  : "today-button small-button"
+                              }
+                              onClick={() => handleToggleTaskToday(task.id)}
+                            >
+                              {task.is_today === 1 ? "Today" : "Add Today"}
+                            </button>
+
                             <button
                               type="button"
                               className="secondary-button small-button"

@@ -132,3 +132,15 @@ export async function deleteTaskList(taskListId) {
 
   return response.json();
 }
+
+export async function toggleTaskToday(taskId) {
+  const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/today`, {
+    method: "PATCH",
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response, "Failed to update today status"));
+  }
+
+  return response.json();
+}
