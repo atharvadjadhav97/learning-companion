@@ -10,6 +10,7 @@ import {
   toggleTaskToday,
   updateTask,
   updateTaskList,
+  updateTaskNotes,
 } from "../api/tasks";
 
 function TasksPage() {
@@ -30,6 +31,9 @@ function TasksPage() {
 
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingTaskTitle, setEditingTaskTitle] = useState("");
+
+  const [openNotesTaskId, setOpenNotesTaskId] = useState(null);
+  const [notesDraft, setNotesDraft] = useState("");
 
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -287,6 +291,34 @@ function TasksPage() {
   const pendingTasks = tasks.filter((task) => task.is_done === 0);
   const completedTasks = tasks.filter((task) => task.is_done === 1);
 
+  function openTaskNotes(task) {
+    setOpenNotesTaskId(task.id);
+    setNotesDraft(task.notes || "");
+    setErrorMessage("");
+   }
+
+    function closeTaskNotes() {
+        setOpenNotesTaskId(null);
+        setNotesDraft("");
+    }
+
+    async function handleSaveTaskNotes(taskId) {
+        setErrorMessage("");
+
+        try {
+            await updateTaskNotes(taskId, {
+            notes: notesDraft.trim() || null,
+            });
+
+            closeTaskNotes();
+
+            if (selectedList) {
+            await loadTasks(selectedList.id);
+            }
+        } catch (error) {
+            setErrorMessage(error.message || "Could not update task notes");
+        }
+    }
   return (
     <div className="page areas-page">
       <header className="page-header areas-header">
@@ -512,19 +544,25 @@ function TasksPage() {
                 ) : (
                   <div className="clean-task-list">
                     {pendingTasks.map((task) => (
-                      <TaskRow
+                    <TaskRow
                         key={task.id}
                         task={task}
                         editingTaskId={editingTaskId}
                         editingTaskTitle={editingTaskTitle}
                         setEditingTaskTitle={setEditingTaskTitle}
+                        openNotesTaskId={openNotesTaskId}
+                        notesDraft={notesDraft}
+                        setNotesDraft={setNotesDraft}
+                        onOpenNotes={openTaskNotes}
+                        onCloseNotes={closeTaskNotes}
+                        onSaveNotes={handleSaveTaskNotes}
                         onToggleTask={handleToggleTask}
                         onToggleToday={handleToggleTaskToday}
                         onStartEdit={startEditingTask}
                         onCancelEdit={cancelEditingTask}
                         onSaveEdit={handleSaveEditedTask}
                         onDelete={handleDeleteTask}
-                      />
+                    />
                     ))}
                   </div>
                 )}
@@ -564,12 +602,17 @@ function TasksPage() {
     </div>
   );
 }
-
 function TaskRow({
   task,
   editingTaskId,
   editingTaskTitle,
   setEditingTaskTitle,
+  openNotesTaskId,
+  notesDraft,
+  setNotesDraft,
+  onOpenNotes,
+  onCloseNotes,
+  onSaveNotes,
   onToggleTask,
   onToggleToday,
   onStartEdit,
@@ -578,74 +621,139 @@ function TaskRow({
   onDelete,
 }) {
   const isEditing = editingTaskId === task.id;
+  const isDetailsOpen = openNotesTaskId === task.id;
+  const hasNotes = Boolean(task.notes && task.notes.trim());
+
+  function handleToggleDetails() {
+    if (isDetailsOpen) {
+      onCloseNotes();
+    } else {
+      onOpenNotes(task);
+    }
+  }
 
   return (
     <div
       className={
         task.is_done === 1
-          ? "clean-task-row completed"
-          : "clean-task-row"
+          ? "clean-task-row improved-task-row task-card-v2 completed"
+          : "clean-task-row improved-task-row task-card-v2"
       }
     >
-      <label className="clean-task-main">
-        <input
-          type="checkbox"
-          checked={task.is_done === 1}
-          onChange={() => onToggleTask(task.id)}
-        />
-
-        {isEditing ? (
+      <div className="task-card-main-row">
+        <label className="task-card-title">
           <input
-            value={editingTaskTitle}
-            onChange={(event) => setEditingTaskTitle(event.target.value)}
-            className="task-inline-edit-input"
+            type="checkbox"
+            checked={task.is_done === 1}
+            onChange={() => onToggleTask(task.id)}
           />
-        ) : (
-          <span>{task.title}</span>
-        )}
-      </label>
 
-      {isEditing ? (
-        <div className="compact-action-row">
-          <button
-            type="button"
-            className="primary-button small-button"
-            onClick={() => onSaveEdit(task.id)}
-          >
-            Save
-          </button>
+          {isEditing ? (
+            <input
+              value={editingTaskTitle}
+              onChange={(event) => setEditingTaskTitle(event.target.value)}
+              className="task-inline-edit-input"
+            />
+          ) : (
+            <span>{task.title}</span>
+          )}
+        </label>
 
-          <button
-            type="button"
-            className="secondary-button small-button"
-            onClick={onCancelEdit}
-          >
-            Cancel
-          </button>
-        </div>
-      ) : (
-        <div className="clean-task-actions">
-          {task.is_done === 0 && (
+        {!isEditing && (
+          <div className="task-card-primary-actions">
+            {task.is_done === 0 && (
+              <button
+                type="button"
+                className={
+                  task.is_today === 1 ? "today-pill active" : "today-pill"
+                }
+                onClick={() => onToggleToday(task.id)}
+              >
+                {task.is_today === 1 ? "Today" : "Add Today"}
+              </button>
+            )}
+
             <button
               type="button"
-              className={
-                task.is_today === 1
-                  ? "today-pill active"
-                  : "today-pill"
-              }
-              onClick={() => onToggleToday(task.id)}
+              className="details-pill"
+              onClick={handleToggleDetails}
             >
-              {task.is_today === 1 ? "Today" : "Add Today"}
+              {isDetailsOpen ? "Close" : hasNotes ? "Notes" : "Details"}
             </button>
-          )}
+          </div>
+        )}
+      </div>
 
-          <button type="button" onClick={() => onStartEdit(task)}>
-            Edit
-          </button>
+      {hasNotes && !isDetailsOpen && !isEditing && (
+        <div className="task-notes-preview">Notes added</div>
+      )}
 
-          <button type="button" onClick={() => onDelete(task.id)}>
-            Delete
-          </button>
+      {isEditing && (
+        <div className="task-card-details-panel">
+          <div className="compact-action-row">
+            <button
+              type="button"
+              className="primary-button small-button"
+              onClick={() => onSaveEdit(task.id)}
+            >
+              Save
+            </button>
+
+            <button
+              type="button"
+              className="secondary-button small-button"
+              onClick={onCancelEdit}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isDetailsOpen && !isEditing && (
+        <div className="task-card-details-panel">
+          <label className="task-notes-label">
+            Notes
+            <textarea
+              value={notesDraft}
+              onChange={(event) => setNotesDraft(event.target.value)}
+              placeholder="Write meeting points, context, links, reminders, or anything you need to remember..."
+            />
+          </label>
+
+          <div className="task-card-secondary-actions">
+            <button
+              type="button"
+              className="primary-button small-button"
+              onClick={() => onSaveNotes(task.id)}
+            >
+              Save Notes
+            </button>
+
+            <button
+              type="button"
+              className="secondary-button small-button"
+              onClick={onCloseNotes}
+            >
+              Close
+            </button>
+
+            <button
+              type="button"
+              className="quiet-link-button"
+              onClick={() => onStartEdit(task)}
+            >
+              Edit title
+            </button>
+
+            <button
+              type="button"
+              className="quiet-danger-link"
+              onClick={() => onDelete(task.id)}
+            >
+              Delete
+            </button>
+          </div>
         </div>
       )}
     </div>

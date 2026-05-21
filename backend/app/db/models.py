@@ -71,6 +71,7 @@ class TaskModel(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     task_list = relationship("TaskListModel", back_populates="tasks")
+    notes = Column(Text, nullable=True)
     
 class BrainDumpModel(Base):
     __tablename__ = "brain_dumps"

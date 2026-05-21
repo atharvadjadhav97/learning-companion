@@ -30,6 +30,10 @@ def ensure_task_columns():
                 text("ALTER TABLE tasks ADD COLUMN completed_at DATETIME")
             )
 
+        if "notes" not in column_names:
+            connection.execute(
+                text("ALTER TABLE tasks ADD COLUMN notes TEXT")
+            )
         connection.commit()
 
 
