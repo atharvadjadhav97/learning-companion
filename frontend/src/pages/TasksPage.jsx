@@ -564,7 +564,6 @@ function TasksPage() {
     </div>
   );
 }
-
 function TaskRow({
   task,
   editingTaskId,
@@ -583,30 +582,32 @@ function TaskRow({
     <div
       className={
         task.is_done === 1
-          ? "clean-task-row completed"
-          : "clean-task-row"
+          ? "clean-task-row improved-task-row completed"
+          : "clean-task-row improved-task-row"
       }
     >
-      <label className="clean-task-main">
-        <input
-          type="checkbox"
-          checked={task.is_done === 1}
-          onChange={() => onToggleTask(task.id)}
-        />
-
-        {isEditing ? (
+      <div className="improved-task-main">
+        <label className="clean-task-main">
           <input
-            value={editingTaskTitle}
-            onChange={(event) => setEditingTaskTitle(event.target.value)}
-            className="task-inline-edit-input"
+            type="checkbox"
+            checked={task.is_done === 1}
+            onChange={() => onToggleTask(task.id)}
           />
-        ) : (
-          <span>{task.title}</span>
-        )}
-      </label>
+
+          {isEditing ? (
+            <input
+              value={editingTaskTitle}
+              onChange={(event) => setEditingTaskTitle(event.target.value)}
+              className="task-inline-edit-input"
+            />
+          ) : (
+            <span>{task.title}</span>
+          )}
+        </label>
+      </div>
 
       {isEditing ? (
-        <div className="compact-action-row">
+        <div className="compact-action-row improved-task-actions">
           <button
             type="button"
             className="primary-button small-button"
@@ -624,26 +625,22 @@ function TaskRow({
           </button>
         </div>
       ) : (
-        <div className="clean-task-actions">
+        <div className="improved-task-actions">
           {task.is_done === 0 && (
             <button
               type="button"
-              className={
-                task.is_today === 1
-                  ? "today-pill active"
-                  : "today-pill"
-              }
+              className={task.is_today === 1 ? "today-pill active" : "today-pill"}
               onClick={() => onToggleToday(task.id)}
             >
               {task.is_today === 1 ? "Today" : "Add Today"}
             </button>
           )}
 
-          <button type="button" onClick={() => onStartEdit(task)}>
+          <button type="button" className="quiet-link-button" onClick={() => onStartEdit(task)}>
             Edit
           </button>
 
-          <button type="button" onClick={() => onDelete(task.id)}>
+          <button type="button" className="quiet-danger-link" onClick={() => onDelete(task.id)}>
             Delete
           </button>
         </div>

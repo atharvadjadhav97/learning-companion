@@ -107,7 +107,7 @@ function TodayPage({ onNavigate }) {
       <header className="today-clean-header">
         <p className="eyebrow">Today</p>
         <h2>What should I pick up?</h2>
-        <p>A quiet place to decide what deserves your attention today.</p>
+        <p>Pick a few things. Ignore the rest for now.</p>
       </header>
 
       {errorMessage && <div className="error-banner">{errorMessage}</div>}
@@ -162,7 +162,7 @@ function TodayPage({ onNavigate }) {
           className="secondary-button"
           onClick={() => onNavigate("areas")}
         >
-          Choose from Areas
+          Choose tasks
         </button>
       </section>
 
