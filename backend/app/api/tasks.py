@@ -10,6 +10,7 @@ from app.schemas.task import (
     TaskList,
     TaskListCreate,
     TaskListUpdate,
+    TaskNotesUpdate,
     TaskUpdate,
 )
 router = APIRouter(tags=["tasks"])
@@ -205,6 +206,28 @@ def toggle_task_today(task_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Task not found")
 
     task.is_today = 0 if task.is_today else 1
+
+    db.commit()
+    db.refresh(task)
+
+    return task
+
+@router.patch("/tasks/{task_id}/notes", response_model=Task)
+def update_task_notes(
+    task_id: int,
+    task_notes_data: TaskNotesUpdate,
+    db: Session = Depends(get_db),
+):
+    task = db.query(TaskModel).filter(TaskModel.id == task_id).first()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task.notes = (
+        task_notes_data.notes.strip()
+        if task_notes_data.notes
+        else None
+    )
 
     db.commit()
     db.refresh(task)

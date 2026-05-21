@@ -26,6 +26,9 @@ class TaskCreate(BaseModel):
 
 class TaskUpdate(BaseModel):
     title: str
+    
+class TaskNotesUpdate(BaseModel):
+    notes: Optional[str] = None
 
 class Task(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -33,6 +36,7 @@ class Task(BaseModel):
     id: int
     task_list_id: int
     title: str
+    notes: Optional[str] = None
     is_done: int
     is_today: int
     completed_at: Optional[datetime] = None

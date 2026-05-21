@@ -144,3 +144,20 @@ export async function toggleTaskToday(taskId) {
 
   return response.json();
 }
+
+
+export async function updateTaskNotes(taskId, taskNotesData) {
+  const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/notes`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(taskNotesData),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response, "Failed to update task notes"));
+  }
+
+  return response.json();
+}
